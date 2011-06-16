@@ -1,0 +1,6 @@
+dn: uid=alice,dc=example,dc=com
+uid: alice
+userPassword: password
+objectClass: account
+objectClass: simpleSecurityObject
+objectClass: top
