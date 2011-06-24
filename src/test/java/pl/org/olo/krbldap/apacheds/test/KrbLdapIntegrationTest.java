@@ -2,8 +2,6 @@ package pl.org.olo.krbldap.apacheds.test;
 
 import java.io.InputStream;
 
-import javax.management.RuntimeErrorException;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.directory.server.annotations.CreateKdcServer;
 import org.apache.directory.server.annotations.CreateLdapServer;
@@ -26,6 +24,7 @@ import org.apache.directory.server.ldap.handlers.bind.plain.PlainMechanismHandle
 import org.apache.directory.shared.ldap.model.constants.SupportedSaslMechanisms;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import pl.org.olo.krbldap.apacheds.handlers.extended.KrbLdapAuthServiceHandler;
 
 /**
  * This test suite tests PAM-krbldap integration with ApacheDS-krbldap.
@@ -45,6 +44,7 @@ import org.junit.runner.RunWith;
 @CreateLdapServer(
         transports = {@CreateTransport(protocol = "LDAP", port = 1389)},
         allowAnonymousAccess = true,
+        extendedOpHandlers = KrbLdapAuthServiceHandler.class,
         saslHost = "localhost",
         saslPrincipal = "ldap/localhost@EXAMPLE.COM",
         saslMechanisms = {@SaslMechanism(name = SupportedSaslMechanisms.PLAIN, implClass = PlainMechanismHandler.class),
@@ -65,7 +65,7 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
     public KrbLdapIntegrationTest() {
         String krbConfPath = getClass().getClassLoader().getResource("krb5.conf").getFile();
         System.setProperty("java.security.krb5.conf", krbConfPath);
-        System.setProperty("sun.security.krb5.debug", "false");
+        System.setProperty("sun.security.krb5.debug", "true");
     }
 
 
@@ -83,6 +83,7 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         System.out.println("STDERR:");
         System.out.println(IOUtils.toString(errorStream));
         System.out.println("STDERR END.");
+        System.out.println("Check your system's syslog (facility AUTH) for any messages from the PAM module.");
         if (retValue != 0) {
             throw new RuntimeException("error code [" + retValue + "] returned from process.");
         }
