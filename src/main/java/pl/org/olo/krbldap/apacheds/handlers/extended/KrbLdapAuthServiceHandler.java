@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public class KrbLdapAuthServiceHandler
         implements ExtendedOperationHandler<ExtendedRequest<ExtendedResponse>, ExtendedResponse> {
-    public static final String EXTENSION_OID = "1.3.6.1.4.1.38200.1.1";
+    public static final String EXTENSION_OID = "1.3.6.1.4.1.38261.1.1";
     private static final Set<String> EXTENSION_OIDS;
 
     private static final Logger LOG = LoggerFactory.getLogger(KrbLdapAuthServiceHandler.class);
