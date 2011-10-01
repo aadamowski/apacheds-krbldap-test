@@ -32,6 +32,8 @@ import org.apache.directory.shared.ldap.model.message.LdapResult;
 import org.apache.directory.shared.ldap.model.message.ResultCodeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapRequest;
+import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapResponse;
 
 /**
  * Handler for the KrbLDAP Authentication Service request (Kerberos' AS-REQ).
@@ -39,22 +41,21 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:aleksander.adamowski@gmail.com">Aleksander Adamowski</a>
  * @see <a href="http://www.ietf.org/rfc/rfc1510.txt">RFC 1510</a>
  */
-public class KrbLdapAuthServiceHandler
-        implements ExtendedOperationHandler<ExtendedRequest<ExtendedResponse>, ExtendedResponse> {
-    public static final String EXTENSION_OID = "1.3.6.1.4.1.38261.1.1";
+public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLdapRequest, KrbLdapResponse> {
     private static final Set<String> EXTENSION_OIDS;
-
     private static final Logger LOG = LoggerFactory.getLogger(KrbLdapAuthServiceHandler.class);
+
     private LdapServer ldapServer;
 
     static {
         Set<String> set = new HashSet<String>(3);
-        set.add(EXTENSION_OID);
+        set.add(KrbLdapRequest.EXTENSION_OID);
+        set.add(KrbLdapResponse.EXTENSION_OID);
         EXTENSION_OIDS = Collections.unmodifiableSet(set);
     }
 
     public String getOid() {
-        return EXTENSION_OID;
+        return KrbLdapResponse.EXTENSION_OID;
     }
 
     public Set<String> getExtensionOids() {
@@ -62,7 +63,7 @@ public class KrbLdapAuthServiceHandler
     }
 
 
-    public void handleExtendedOperation(LdapSession session, ExtendedRequest<ExtendedResponse> req) throws Exception {
+    public void handleExtendedOperation(LdapSession session, KrbLdapRequest req) throws Exception {
         LOG.info("Handling KrbLdap AS request.");
         if (LOG.isDebugEnabled()) {
             LOG.debug("LdapSession: [" + session.toString() + "]");
