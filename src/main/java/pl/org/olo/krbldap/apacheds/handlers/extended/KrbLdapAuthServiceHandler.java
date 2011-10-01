@@ -60,15 +60,6 @@ public class KrbLdapAuthServiceHandler
     }
 
 
-    //    public void handleExtendedOperation(LdapSession ldapSession, InternalExtendedRequest internalExtendedRequest)
-    //            throws Exception {
-    //        LOG.info("Handling KrbLdap AS request.");
-    //        if (LOG.isDebugEnabled()) {
-    //            LOG.debug("LdapSession: [" + ldapSession.toString() + "]");
-    //            LOG.debug("InternalExtendedRequest: [" + internalExtendedRequest.toString() + "]");
-    //        }
-    //    }
-
     public void handleExtendedOperation(LdapSession session, ExtendedRequest<ExtendedResponse> req) throws Exception {
         LOG.info("Handling KrbLdap AS request.");
         if (LOG.isDebugEnabled()) {
