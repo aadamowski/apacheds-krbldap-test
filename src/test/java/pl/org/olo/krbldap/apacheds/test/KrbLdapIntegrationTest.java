@@ -58,12 +58,20 @@ import pl.org.olo.krbldap.apacheds.handlers.extended.KrbLdapAuthServiceHandler;
 @ApplyLdifFiles("test.ldif")
 public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
     public static LdapServer ldapServer;
+    /**
+     * Pathname of the client test shell script
+     */
+    private static final String CLIENT_TEST_SCRIPT = "/var/soft/PAM/run-tests-krbldap-direct.sh";
+    /**
+     * KRB5 conf file location relative to classpath
+     */
+    private static final String KRB5_CONF_RESOURCE_LOCATION = "krb5.conf";
 
     /**
      * Creates a new instance of SaslGssapiBindTest and sets JAAS system properties.
      */
     public KrbLdapIntegrationTest() {
-        String krbConfPath = getClass().getClassLoader().getResource("krb5.conf").getFile();
+        String krbConfPath = getClass().getClassLoader().getResource(KRB5_CONF_RESOURCE_LOCATION).getFile();
         System.setProperty("java.security.krb5.conf", krbConfPath);
         System.setProperty("sun.security.krb5.debug", "true");
     }
@@ -72,7 +80,7 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
     @Test
     public void testShouldPerformSuccessfulAuthentication() throws Exception {
 
-        final Process process = Runtime.getRuntime().exec("/var/soft/PAM/run-tests-krbldap-direct.sh");
+        final Process process = Runtime.getRuntime().exec(CLIENT_TEST_SCRIPT);
         final InputStream errorStream = process.getErrorStream();
         final InputStream inputStream = process.getInputStream();
         final int retValue = process.waitFor();
