@@ -21,9 +21,12 @@ import org.apache.directory.server.ldap.handlers.bind.digestMD5.DigestMd5Mechani
 import org.apache.directory.server.ldap.handlers.bind.gssapi.GssapiMechanismHandler;
 import org.apache.directory.server.ldap.handlers.bind.ntlm.NtlmMechanismHandler;
 import org.apache.directory.server.ldap.handlers.bind.plain.PlainMechanismHandler;
+import org.apache.directory.shared.ldap.codec.api.LdapApiService;
+import org.apache.directory.shared.ldap.codec.api.LdapApiServiceFactory;
 import org.apache.directory.shared.ldap.model.constants.SupportedSaslMechanisms;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import pl.org.olo.krbldap.apacheds.extras.extended.ads_impl.krbLdap.KrbLdapFactory;
 import pl.org.olo.krbldap.apacheds.handlers.extended.KrbLdapAuthServiceHandler;
 
 /**
@@ -74,11 +77,15 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         String krbConfPath = getClass().getClassLoader().getResource(KRB5_CONF_RESOURCE_LOCATION).getFile();
         System.setProperty("java.security.krb5.conf", krbConfPath);
         System.setProperty("sun.security.krb5.debug", "true");
+
     }
 
 
     @Test
     public void testShouldPerformSuccessfulAuthentication() throws Exception {
+        final LdapApiService ldapApiService = LdapApiServiceFactory.getSingleton();
+        final KrbLdapFactory krbLdapFactory = new KrbLdapFactory(ldapApiService);
+                ldapApiService.registerExtendedRequest(krbLdapFactory);
 
         final Process process = Runtime.getRuntime().exec(CLIENT_TEST_SCRIPT);
         final InputStream errorStream = process.getErrorStream();
