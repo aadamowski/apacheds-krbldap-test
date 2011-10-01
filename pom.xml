@@ -30,7 +30,7 @@
   <version>1.0-SNAPSHOT</version>
 
   <properties>
-    <apache-ds.version>2.0.0-M1</apache-ds.version>
+    <apache-ds.version>2.0.0-M2</apache-ds.version>
   </properties>
 
   <build>
