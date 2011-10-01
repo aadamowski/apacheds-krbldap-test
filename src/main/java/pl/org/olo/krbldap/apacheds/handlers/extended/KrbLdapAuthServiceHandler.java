@@ -28,6 +28,8 @@ import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.LdapSession;
 import org.apache.directory.shared.ldap.model.message.ExtendedRequest;
 import org.apache.directory.shared.ldap.model.message.ExtendedResponse;
+import org.apache.directory.shared.ldap.model.message.LdapResult;
+import org.apache.directory.shared.ldap.model.message.ResultCodeEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,10 @@ public class KrbLdapAuthServiceHandler
         if (LOG.isDebugEnabled()) {
             LOG.debug("LdapSession: [" + session.toString() + "]");
             LOG.debug("ExtendedRequest: [" + req.toString() + "]");
-            //  final ExtendedResponse resultResponse = req.getResultResponse();
+            final ExtendedResponse resultResponse = req.getResultResponse();
+            final LdapResult ldapResult = resultResponse.getLdapResult();
+            ldapResult.setResultCode(ResultCodeEnum.SUCCESS);
+            session.getIoSession().write(resultResponse);
         }
     }
 
