@@ -10,6 +10,7 @@ import org.apache.directory.shared.ldap.model.message.ExtendedResponse;
 import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapRequest;
 import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapRequestImpl;
 import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapResponse;
+import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapResponseImpl;
 
 /**
  *
@@ -36,14 +37,24 @@ public class KrbLdapFactory implements ExtendedRequestFactory<KrbLdapRequest, Kr
     }
 
     public ExtendedRequestDecorator<KrbLdapRequest, KrbLdapResponse> decorate(ExtendedRequest<?> modelRequest) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if (modelRequest instanceof KrbLdapRequestDecorator) {
+            return (KrbLdapRequestDecorator) modelRequest;
+        }
+
+        return new KrbLdapRequestDecorator(ldapApiService, (KrbLdapRequest) modelRequest);
     }
 
     public KrbLdapResponse newResponse(byte[] encodedValue) throws DecoderException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        KrbLdapResponseDecorator response = new KrbLdapResponseDecorator(ldapApiService, new KrbLdapResponseImpl());
+        response.setResponseValue(encodedValue);
+        return response;
     }
 
     public ExtendedResponseDecorator<KrbLdapResponse> decorate(ExtendedResponse decoratedMessage) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        if (decoratedMessage instanceof KrbLdapResponseDecorator) {
+            return (KrbLdapResponseDecorator) decoratedMessage;
+        }
+
+        return new KrbLdapResponseDecorator(ldapApiService, (KrbLdapResponse) decoratedMessage);
     }
 }
