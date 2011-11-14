@@ -1,25 +1,23 @@
 package pl.org.olo.krbldap.apacheds.extras.extended;
 
+import javax.naming.ldap.ExtendedResponse;
+
 import org.apache.directory.shared.ldap.model.message.ExtendedRequestImpl;
+import org.apache.directory.shared.ldap.model.message.ExtendedResponseImpl;
 import org.apache.directory.shared.ldap.model.message.LdapResult;
+import org.apache.directory.shared.ldap.model.message.ResultCodeEnum;
 
 /**
  *
  */
-public class KrbLdapResponseImpl extends ExtendedRequestImpl implements KrbLdapResponse {
+public class KrbLdapResponseImpl extends ExtendedResponseImpl implements KrbLdapResponse {
+    public KrbLdapResponseImpl(int messageId) {
+        super(messageId, EXTENSION_OID);
+    }
+
     public KrbLdapResponseImpl() {
-        setResponseName(EXTENSION_OID);
+        super(EXTENSION_OID);
+
     }
 
-    public String getResponseName() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public void setResponseName(String oid) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public LdapResult getLdapResult() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
 }
