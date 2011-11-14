@@ -26,6 +26,7 @@ import java.util.Set;
 import org.apache.directory.server.ldap.ExtendedOperationHandler;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.LdapSession;
+import org.apache.directory.shared.ldap.model.exception.LdapProtocolErrorException;
 import org.apache.directory.shared.ldap.model.message.ExtendedRequest;
 import org.apache.directory.shared.ldap.model.message.ExtendedResponse;
 import org.apache.directory.shared.ldap.model.message.LdapResult;
@@ -69,7 +70,19 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
             LOG.debug("LdapSession: [" + session.toString() + "]");
             LOG.debug("ExtendedRequest: [" + req.toString() + "]");
             final ExtendedResponse resultResponse = req.getResultResponse();
+            if (resultResponse == null) {
+                final String message = "Request has no resultResponse!";
+                LOG.error(message + " request is: " + req.toString());
+                throw new LdapProtocolErrorException(message);
+            }
+
             final LdapResult ldapResult = resultResponse.getLdapResult();
+            if (ldapResult == null) {
+                final String message = "Response has no ldapResult!";
+                LOG.error(message + " response is: " + resultResponse.toString());
+                throw new LdapProtocolErrorException(message);
+            }
+
             ldapResult.setResultCode(ResultCodeEnum.SUCCESS);
             session.getIoSession().write(resultResponse);
         }
