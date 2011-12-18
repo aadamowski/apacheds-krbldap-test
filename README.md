@@ -4,6 +4,7 @@
   ApacheDS-based server side implementation of KrbLDAP protocol (Kerberos v5 using LDAP extended operations as carrier protocol).
 
   Encloses:
+
   * ApacheDS extended operation handler implementation that takes care of extracting Kerberos v5 messages from the LDAP extended operation message and feeding it to the ApacheDS Kerberos KDC / TGS service
   * Test suite that launches customized pam-krb5 module's tests against a KrbLDAP-ized test instance of the ApacheDS server.
 
