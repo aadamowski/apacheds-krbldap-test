@@ -64,7 +64,7 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
     /**
      * Pathname of the client test shell script
      */
-    private static final String CLIENT_TEST_SCRIPT = "/var/soft/PAM/run-tests-krbldap-direct.sh";
+    private static final String CLIENT_TEST_SCRIPT = "/var/soft/PAM/krb5-github/src/pam_krb5/tests/run-tests-krbldap-direct.sh";
     /**
      * KRB5 conf file location relative to classpath
      */
@@ -85,7 +85,7 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
     public void testShouldPerformSuccessfulAuthentication() throws Exception {
         final LdapApiService ldapApiService = LdapApiServiceFactory.getSingleton();
         final KrbLdapFactory krbLdapFactory = new KrbLdapFactory(ldapApiService);
-                ldapApiService.registerExtendedRequest(krbLdapFactory);
+        ldapApiService.registerExtendedRequest(krbLdapFactory);
 
         final Process process = Runtime.getRuntime().exec(CLIENT_TEST_SCRIPT);
         final InputStream errorStream = process.getErrorStream();
