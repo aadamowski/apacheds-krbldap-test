@@ -1,8 +1,9 @@
 package pl.org.olo.krbldap.apacheds.test;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.directory.server.annotations.CreateKdcServer;
 import org.apache.directory.server.annotations.CreateLdapServer;
 import org.apache.directory.server.annotations.CreateTransport;
@@ -64,7 +65,8 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
     /**
      * Pathname of the client test shell script
      */
-    private static final String CLIENT_TEST_SCRIPT = "/var/soft/PAM/krb5-github/src/pam_krb5/tests/run-tests-krbldap-direct.sh";
+    private static final String CLIENT_TEST_SCRIPT =
+            "/var/soft/PAM/krb5-github/src/pam_krb5/tests/run-tests-krbldap-direct.sh";
     /**
      * KRB5 conf file location relative to classpath
      */
@@ -90,6 +92,21 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         final Process process = Runtime.getRuntime().exec(CLIENT_TEST_SCRIPT);
         final InputStream errorStream = process.getErrorStream();
         final InputStream inputStream = process.getInputStream();
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        final BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream));
+        System.out.println(
+                "Testing started. Check your system's syslog (facility AUTH) for any messages from the PAM module.");
+        while (true) {
+            while (reader.ready()) {
+                System.out.println(reader.readLine());
+            }
+            while (errorReader.ready()) {
+                System.out.println(errorReader.readLine());
+            }
+            Thread.sleep(50);
+        }
+
+        /*
         final int retValue = process.waitFor();
         System.out.println("Return code: [" + retValue + "]");
         System.out.println("STDOUT:");
@@ -98,10 +115,10 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         System.out.println("STDERR:");
         System.out.println(IOUtils.toString(errorStream));
         System.out.println("STDERR END.");
-        System.out.println("Check your system's syslog (facility AUTH) for any messages from the PAM module.");
         if (retValue != 0) {
             throw new RuntimeException("error code [" + retValue + "] returned from process.");
         }
+        */
     }
 
 }
