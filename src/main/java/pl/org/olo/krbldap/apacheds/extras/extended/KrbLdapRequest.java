@@ -1,5 +1,6 @@
 package pl.org.olo.krbldap.apacheds.extras.extended;
 
+import org.apache.directory.shared.kerberos.messages.KerberosMessage;
 import org.apache.directory.shared.ldap.model.message.ExtendedRequest;
 
 /**
@@ -10,4 +11,8 @@ import org.apache.directory.shared.ldap.model.message.ExtendedRequest;
  */
 public interface KrbLdapRequest extends ExtendedRequest<KrbLdapResponse> {
     public static final String EXTENSION_OID = KrbLdapResponse.EXTENSION_OID;
+
+    KerberosMessage getKerberosMessage();
+
+    void setKerberosMessage(KerberosMessage kerberosMessage);
 }
