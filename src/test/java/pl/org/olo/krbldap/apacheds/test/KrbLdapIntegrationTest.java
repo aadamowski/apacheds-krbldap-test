@@ -16,6 +16,7 @@ import org.apache.directory.server.core.annotations.CreatePartition;
 import org.apache.directory.server.core.integ.AbstractLdapTestUnit;
 import org.apache.directory.server.core.integ.FrameworkRunner;
 import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
+import org.apache.directory.server.kerberos.kdc.KdcServer;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.handlers.bind.cramMD5.CramMd5MechanismHandler;
 import org.apache.directory.server.ldap.handlers.bind.digestMD5.DigestMd5MechanismHandler;
@@ -61,7 +62,6 @@ import pl.org.olo.krbldap.apacheds.handlers.extended.KrbLdapAuthServiceHandler;
         transports = {@CreateTransport(protocol = "UDP", port = 6088), @CreateTransport(protocol = "TCP", port = 6088)})
 @ApplyLdifFiles("test.ldif")
 public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
-    public static LdapServer ldapServer;
     /**
      * Pathname of the client test shell script
      */
@@ -88,6 +88,8 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         final LdapApiService ldapApiService = LdapApiServiceFactory.getSingleton();
         final KrbLdapFactory krbLdapFactory = new KrbLdapFactory(ldapApiService);
         ldapApiService.registerExtendedRequest(krbLdapFactory);
+        System.out.println("kdcServer: " + getKdcServer());
+        // TODO: register kdcServer in KrbLdapAuthServiceHandler?
 
         final Process process = Runtime.getRuntime().exec(CLIENT_TEST_SCRIPT);
         final InputStream errorStream = process.getErrorStream();

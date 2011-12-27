@@ -43,14 +43,14 @@ import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapResponse;
  * @see <a href="http://www.ietf.org/rfc/rfc1510.txt">RFC 1510</a>
  */
 public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLdapRequest, KrbLdapResponse> {
-// ------------------------------ FIELDS ------------------------------
+    // ------------------------------ FIELDS ------------------------------
 
     private static final Set<String> EXTENSION_OIDS;
     private static final Logger LOG = LoggerFactory.getLogger(KrbLdapAuthServiceHandler.class);
 
     private LdapServer ldapServer;
 
-// -------------------------- STATIC METHODS --------------------------
+    // -------------------------- STATIC METHODS --------------------------
 
     static {
         Set<String> set = new HashSet<String>(3);
@@ -59,17 +59,17 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         EXTENSION_OIDS = Collections.unmodifiableSet(set);
     }
 
-// --------------------- GETTER / SETTER METHODS ---------------------
+    // --------------------- GETTER / SETTER METHODS ---------------------
 
     public void setLdapServer(LdapServer ldapServer) {
         LOG.debug("Setting LDAP Service");
         this.ldapServer = ldapServer;
     }
 
-// ------------------------ INTERFACE METHODS ------------------------
+    // ------------------------ INTERFACE METHODS ------------------------
 
 
-// --------------------- Interface ExtendedOperationHandler ---------------------
+    // --------------------- Interface ExtendedOperationHandler ---------------------
 
     public String getOid() {
         return KrbLdapResponse.EXTENSION_OID;
@@ -85,6 +85,11 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
             LOG.debug("LdapSession: [" + session.toString() + "]");
             LOG.debug("ExtendedRequest: [" + req.toString() + "]");
             LOG.debug("KerberosMessage contained in ExtendedRequest: " + req.getKerberosMessage());
+            LOG.debug("ldapServer available: " + this.ldapServer);
+            /** TODO: perform message processing similar in behaviour to
+             * {@link org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler#messageReceived}
+             */
+
             final ExtendedResponse resultResponse = req.getResultResponse();
             if (resultResponse == null) {
                 final String message = "Request has no resultResponse!";
