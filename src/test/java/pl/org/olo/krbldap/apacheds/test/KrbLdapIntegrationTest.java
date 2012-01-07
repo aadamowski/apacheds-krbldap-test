@@ -135,6 +135,8 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         // based on the present KdcServer:
         final ExtendedOperationHandler<ExtendedRequest<ExtendedResponse>, ExtendedResponse> extendedOperationHandler =
                 getLdapServer().getExtendedOperationHandler(KrbLdapRequest.EXTENSION_OID);
+        // Workaround for JVM generics bug "javac error: inconvertible types" - see:
+        // http://stackoverflow.com/questions/4829576/javac-error-inconvertible-types-with-generics
         Object tmp = extendedOperationHandler;
         if (!(tmp instanceof KrbLdapAuthServiceHandler)) {
             throw new IllegalStateException(
