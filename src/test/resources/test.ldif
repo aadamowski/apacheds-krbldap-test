@@ -1,4 +1,9 @@
-dn: uid=alice,dc=example,dc=com
+dn: ou=users,dc=example,dc=com
+ou: users
+objectClass: top
+objectClass: organizationalUnit
+
+dn: uid=alice,ou=users,dc=example,dc=com
 uid: alice
 userPassword: password
 objectClass: account

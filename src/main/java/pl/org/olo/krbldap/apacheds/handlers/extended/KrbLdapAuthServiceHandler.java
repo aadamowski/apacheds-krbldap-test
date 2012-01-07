@@ -19,22 +19,28 @@
  */
 package pl.org.olo.krbldap.apacheds.handlers.extended;
 
+import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler;
 import org.apache.directory.server.ldap.ExtendedOperationHandler;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.LdapSession;
+import org.apache.directory.shared.kerberos.messages.KerberosMessage;
 import org.apache.directory.shared.ldap.model.exception.LdapProtocolErrorException;
-import org.apache.directory.shared.ldap.model.message.ExtendedRequest;
-import org.apache.directory.shared.ldap.model.message.ExtendedResponse;
 import org.apache.directory.shared.ldap.model.message.LdapResult;
 import org.apache.directory.shared.ldap.model.message.ResultCodeEnum;
+import org.apache.mina.core.future.DefaultWriteFuture;
+import org.apache.mina.core.future.WriteFuture;
+import org.apache.mina.core.session.DummySession;
+import org.apache.mina.core.session.IoSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapRequest;
 import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapResponse;
+import sun.security.krb5.KrbException;
 
 /**
  * Handler for the KrbLDAP Authentication Service request (Kerberos' AS-REQ).
@@ -43,14 +49,16 @@ import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapResponse;
  * @see <a href="http://www.ietf.org/rfc/rfc1510.txt">RFC 1510</a>
  */
 public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLdapRequest, KrbLdapResponse> {
-    // ------------------------------ FIELDS ------------------------------
+// ------------------------------ FIELDS ------------------------------
 
     private static final Set<String> EXTENSION_OIDS;
     private static final Logger LOG = LoggerFactory.getLogger(KrbLdapAuthServiceHandler.class);
 
-    private LdapServer ldapServer;
+    protected LdapServer ldapServer;
 
-    // -------------------------- STATIC METHODS --------------------------
+    private KerberosProtocolHandler kerberosProtocolHandler;
+
+// -------------------------- STATIC METHODS --------------------------
 
     static {
         Set<String> set = new HashSet<String>(3);
@@ -59,17 +67,31 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         EXTENSION_OIDS = Collections.unmodifiableSet(set);
     }
 
-    // --------------------- GETTER / SETTER METHODS ---------------------
+// --------------------------- CONSTRUCTORS ---------------------------
+
+    public KrbLdapAuthServiceHandler() {
+
+    }
+
+// --------------------- GETTER / SETTER METHODS ---------------------
+
+    public KerberosProtocolHandler getKerberosProtocolHandler() {
+        return kerberosProtocolHandler;
+    }
+
+    public void setKerberosProtocolHandler(KerberosProtocolHandler kerberosProtocolHandler) {
+        this.kerberosProtocolHandler = kerberosProtocolHandler;
+    }
 
     public void setLdapServer(LdapServer ldapServer) {
         LOG.debug("Setting LDAP Service");
         this.ldapServer = ldapServer;
     }
 
-    // ------------------------ INTERFACE METHODS ------------------------
+// ------------------------ INTERFACE METHODS ------------------------
 
 
-    // --------------------- Interface ExtendedOperationHandler ---------------------
+// --------------------- Interface ExtendedOperationHandler ---------------------
 
     public String getOid() {
         return KrbLdapResponse.EXTENSION_OID;
@@ -81,31 +103,100 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
 
     public void handleExtendedOperation(LdapSession session, KrbLdapRequest req) throws Exception {
         LOG.info("Handling KrbLdap AS request.");
+        final KerberosMessage kerberosMessage = req.getKerberosMessage();
         if (LOG.isDebugEnabled()) {
             LOG.debug("LdapSession: [" + session.toString() + "]");
             LOG.debug("ExtendedRequest: [" + req.toString() + "]");
-            LOG.debug("KerberosMessage contained in ExtendedRequest: " + req.getKerberosMessage());
+
+            LOG.debug("KerberosMessage contained in ExtendedRequest: " + kerberosMessage);
             LOG.debug("ldapServer available: " + this.ldapServer);
-            /** TODO: perform message processing similar in behaviour to
-             * {@link org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler#messageReceived}
-             */
+        }
+        /** TODO: perform message processing similar in behaviour to
+         * {@link org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler#messageReceived}
+         */
+        final IoSession ldapIoSession = session.getIoSession();
+        final KrbLdapAuthServiceHandlerIoSession handlerSession = new KrbLdapAuthServiceHandlerIoSession();
+        handlerSession.setRemoteAddress(ldapIoSession.getRemoteAddress());
+        final KerberosMessage kerberosReply;
+        kerberosProtocolHandler.messageReceived(handlerSession, kerberosMessage);
+        kerberosReply = handlerSession.getKerberosMessage();
+        if (kerberosReply == null) {
+            LOG.warn("kerberosReply in " + KrbLdapAuthServiceHandlerIoSession.class.getName() +
+                    " is null, which means that messageReceived didn't set any reply.");
+        }
 
-            final ExtendedResponse resultResponse = req.getResultResponse();
-            if (resultResponse == null) {
-                final String message = "Request has no resultResponse!";
-                LOG.error(message + " request is: " + req.toString());
-                throw new LdapProtocolErrorException(message);
+        final KrbLdapResponse resultResponse = req.getResultResponse();
+
+        if (resultResponse == null) {
+            final String message = "Request has no resultResponse!";
+            LOG.error(message + " request is: " + req.toString());
+            throw new LdapProtocolErrorException(message);
+        }
+
+        resultResponse.setKerberosReply(kerberosReply);
+
+        final LdapResult ldapResult = resultResponse.getLdapResult();
+
+        if (ldapResult == null) {
+            final String message = "Response has no ldapResult!";
+            LOG.error(message + " response is: " + resultResponse.toString());
+            throw new LdapProtocolErrorException(message);
+        }
+
+        ldapResult.setResultCode(ResultCodeEnum.SUCCESS);
+        ldapIoSession.write(resultResponse);
+    }
+
+// -------------------------- INNER CLASSES --------------------------
+
+    private class KrbLdapAuthServiceHandlerIoSession extends DummySession {
+// ------------------------------ FIELDS ------------------------------
+
+        private SocketAddress remoteAddress;
+
+        private KerberosMessage kerberosMessage = null;
+
+// --------------------- GETTER / SETTER METHODS ---------------------
+
+        public KerberosMessage getKerberosMessage() {
+            return kerberosMessage;
+        }
+
+        public void setKerberosMessage(KerberosMessage kerberosMessage) {
+            this.kerberosMessage = kerberosMessage;
+        }
+
+        @Override
+        public SocketAddress getRemoteAddress() {
+            return this.remoteAddress;
+        }
+
+        public void setRemoteAddress(SocketAddress remoteAddress) {
+            this.remoteAddress = remoteAddress;
+        }
+
+// ------------------------ INTERFACE METHODS ------------------------
+
+
+// --------------------- Interface IoSession ---------------------
+
+        @Override
+        public WriteFuture write(Object message) {
+            final DefaultWriteFuture writeFuture;
+            if (message instanceof KerberosMessage) {
+                writeFuture = (DefaultWriteFuture) DefaultWriteFuture.newWrittenFuture(this);
+                writeFuture.setValue(message);
+                setKerberosMessage((KerberosMessage) message);
+            } else {
+                final KrbException krbException =
+                        new KrbException("Message written to " + KrbLdapAuthServiceHandlerIoSession.class.getName() +
+                                " is not of class " + KerberosMessage.class.getName() + " but instead of class " +
+                                message.getClass().getName());
+                LOG.error(krbException.getMessage(), krbException);
+                writeFuture = (DefaultWriteFuture) DefaultWriteFuture.newNotWrittenFuture(this, krbException);
             }
 
-            final LdapResult ldapResult = resultResponse.getLdapResult();
-            if (ldapResult == null) {
-                final String message = "Response has no ldapResult!";
-                LOG.error(message + " response is: " + resultResponse.toString());
-                throw new LdapProtocolErrorException(message);
-            }
-
-            ldapResult.setResultCode(ResultCodeEnum.SUCCESS);
-            session.getIoSession().write(resultResponse);
+            return writeFuture;
         }
     }
 }

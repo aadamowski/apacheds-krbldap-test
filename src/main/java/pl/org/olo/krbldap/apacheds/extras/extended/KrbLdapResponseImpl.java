@@ -2,6 +2,7 @@ package pl.org.olo.krbldap.apacheds.extras.extended;
 
 import javax.naming.ldap.ExtendedResponse;
 
+import org.apache.directory.shared.kerberos.messages.KerberosMessage;
 import org.apache.directory.shared.ldap.model.message.ExtendedRequestImpl;
 import org.apache.directory.shared.ldap.model.message.ExtendedResponseImpl;
 import org.apache.directory.shared.ldap.model.message.LdapResult;
@@ -20,4 +21,10 @@ public class KrbLdapResponseImpl extends ExtendedResponseImpl implements KrbLdap
 
     }
 
+    public KerberosMessage getKerberosReply() {
+        return null;
+    }
+
+    public void setKerberosReply(KerberosMessage kerberosReply) {
+    }
 }

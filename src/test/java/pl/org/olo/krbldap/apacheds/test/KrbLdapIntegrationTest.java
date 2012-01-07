@@ -17,7 +17,10 @@ import org.apache.directory.server.core.integ.AbstractLdapTestUnit;
 import org.apache.directory.server.core.integ.FrameworkRunner;
 import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
 import org.apache.directory.server.kerberos.kdc.KdcServer;
-import org.apache.directory.server.ldap.LdapServer;
+import org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler;
+import org.apache.directory.server.kerberos.shared.store.DirectoryPrincipalStore;
+import org.apache.directory.server.kerberos.shared.store.PrincipalStore;
+import org.apache.directory.server.ldap.ExtendedOperationHandler;
 import org.apache.directory.server.ldap.handlers.bind.cramMD5.CramMd5MechanismHandler;
 import org.apache.directory.server.ldap.handlers.bind.digestMD5.DigestMd5MechanismHandler;
 import org.apache.directory.server.ldap.handlers.bind.gssapi.GssapiMechanismHandler;
@@ -26,8 +29,13 @@ import org.apache.directory.server.ldap.handlers.bind.plain.PlainMechanismHandle
 import org.apache.directory.shared.ldap.codec.api.LdapApiService;
 import org.apache.directory.shared.ldap.codec.api.LdapApiServiceFactory;
 import org.apache.directory.shared.ldap.model.constants.SupportedSaslMechanisms;
+import org.apache.directory.shared.ldap.model.exception.LdapInvalidDnException;
+import org.apache.directory.shared.ldap.model.message.ExtendedRequest;
+import org.apache.directory.shared.ldap.model.message.ExtendedResponse;
+import org.apache.directory.shared.ldap.model.name.Dn;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapRequest;
 import pl.org.olo.krbldap.apacheds.extras.extended.ads_impl.krbLdap.KrbLdapFactory;
 import pl.org.olo.krbldap.apacheds.handlers.extended.KrbLdapAuthServiceHandler;
 
@@ -85,12 +93,11 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
 
     @Test
     public void testShouldPerformSuccessfulAuthentication() throws Exception {
-        final LdapApiService ldapApiService = LdapApiServiceFactory.getSingleton();
-        final KrbLdapFactory krbLdapFactory = new KrbLdapFactory(ldapApiService);
-        ldapApiService.registerExtendedRequest(krbLdapFactory);
-        System.out.println("kdcServer: " + getKdcServer());
-        // TODO: register kdcServer in KrbLdapAuthServiceHandler?
+        registerKrbLdapExtendedRequest();
+        configureKrbLdapAuthServiceHandler();
 
+
+        // The server has been set up. Run the integration test client shell script:
         final Process process = Runtime.getRuntime().exec(CLIENT_TEST_SCRIPT);
         final InputStream errorStream = process.getErrorStream();
         final InputStream inputStream = process.getInputStream();
@@ -121,6 +128,31 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
             throw new RuntimeException("error code [" + retValue + "] returned from process.");
         }
         */
+    }
+
+    private void configureKrbLdapAuthServiceHandler() throws LdapInvalidDnException {
+        // Configure the KrbLdapAuthServiceHandler by injecting it with a new KerberosProtocolHandler
+        // based on the present KdcServer:
+        final ExtendedOperationHandler<ExtendedRequest<ExtendedResponse>, ExtendedResponse> extendedOperationHandler =
+                getLdapServer().getExtendedOperationHandler(KrbLdapRequest.EXTENSION_OID);
+        Object tmp = extendedOperationHandler;
+        if (!(tmp instanceof KrbLdapAuthServiceHandler)) {
+            throw new IllegalStateException(
+                    "extendedOperationHandler not instanceof " + KrbLdapAuthServiceHandler.class.getName());
+        }
+        final KrbLdapAuthServiceHandler krbLdapAuthServiceHandler = (KrbLdapAuthServiceHandler) tmp;
+        final KdcServer kdcServer = getKdcServer();
+        System.out.println("kdcServer: " + kdcServer);
+        PrincipalStore principalStore =
+                new DirectoryPrincipalStore(kdcServer.getDirectoryService(), new Dn(kdcServer.getSearchBaseDn()));
+        final KerberosProtocolHandler kerberosProtocolHandler = new KerberosProtocolHandler(kdcServer, principalStore);
+        krbLdapAuthServiceHandler.setKerberosProtocolHandler(kerberosProtocolHandler);
+    }
+
+    private void registerKrbLdapExtendedRequest() {
+        final LdapApiService ldapApiService = LdapApiServiceFactory.getSingleton();
+        final KrbLdapFactory krbLdapFactory = new KrbLdapFactory(ldapApiService);
+        ldapApiService.registerExtendedRequest(krbLdapFactory);
     }
 
 }
