@@ -22,12 +22,16 @@ package pl.org.olo.krbldap.apacheds.handlers.extended;
 import java.net.SocketAddress;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler;
 import org.apache.directory.server.ldap.ExtendedOperationHandler;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.LdapSession;
+import org.apache.directory.shared.kerberos.components.PaData;
+import org.apache.directory.shared.kerberos.messages.AsReq;
 import org.apache.directory.shared.kerberos.messages.KerberosMessage;
 import org.apache.directory.shared.ldap.model.exception.LdapProtocolErrorException;
 import org.apache.directory.shared.ldap.model.message.LdapResult;
@@ -49,7 +53,7 @@ import sun.security.krb5.KrbException;
  * @see <a href="http://www.ietf.org/rfc/rfc1510.txt">RFC 1510</a>
  */
 public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLdapRequest, KrbLdapResponse> {
-// ------------------------------ FIELDS ------------------------------
+    // ------------------------------ FIELDS ------------------------------
 
     private static final Set<String> EXTENSION_OIDS;
     private static final Logger LOG = LoggerFactory.getLogger(KrbLdapAuthServiceHandler.class);
@@ -58,7 +62,7 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
 
     private KerberosProtocolHandler kerberosProtocolHandler;
 
-// -------------------------- STATIC METHODS --------------------------
+    // -------------------------- STATIC METHODS --------------------------
 
     static {
         Set<String> set = new HashSet<String>(3);
@@ -67,13 +71,13 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         EXTENSION_OIDS = Collections.unmodifiableSet(set);
     }
 
-// --------------------------- CONSTRUCTORS ---------------------------
+    // --------------------------- CONSTRUCTORS ---------------------------
 
     public KrbLdapAuthServiceHandler() {
 
     }
 
-// --------------------- GETTER / SETTER METHODS ---------------------
+    // --------------------- GETTER / SETTER METHODS ---------------------
 
     public KerberosProtocolHandler getKerberosProtocolHandler() {
         return kerberosProtocolHandler;
@@ -88,10 +92,10 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         this.ldapServer = ldapServer;
     }
 
-// ------------------------ INTERFACE METHODS ------------------------
+    // ------------------------ INTERFACE METHODS ------------------------
 
 
-// --------------------- Interface ExtendedOperationHandler ---------------------
+    // --------------------- Interface ExtendedOperationHandler ---------------------
 
     public String getOid() {
         return KrbLdapResponse.EXTENSION_OID;
@@ -107,9 +111,26 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         if (LOG.isDebugEnabled()) {
             LOG.debug("LdapSession: [" + session.toString() + "]");
             LOG.debug("ExtendedRequest: [" + req.toString() + "]");
-
             LOG.debug("KerberosMessage contained in ExtendedRequest: " + kerberosMessage);
+            LOG.debug("KerberosMessage class: " + kerberosMessage.getClass().getName());
             LOG.debug("ldapServer available: " + this.ldapServer);
+        }
+        // Clean up zero-type padata entries from the list.
+        // TODO: investigate where do zero-type padata entries come from.
+        if (kerberosMessage instanceof AsReq) {
+            LOG.debug("PaData list contents:");
+            final List<PaData> paDataList = ((AsReq) kerberosMessage).getPaData();
+            final Iterator<PaData> iterator = paDataList.iterator();
+            while (iterator.hasNext()) {
+                PaData paData = iterator.next();
+                LOG.debug("  PaData type value: " + paData.getPaDataType().getValue());
+                LOG.debug("  PaData value: " + paData.getPaDataValue());
+                if (paData.getPaDataType().getValue() == 0) {
+                    LOG.warn("    Zero-type PaData found: " + paData);
+                    //                    LOG.warn("    removing.");
+                    //                    iterator.remove();
+                }
+            }
         }
         /** TODO: perform message processing similar in behaviour to
          * {@link org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler#messageReceived}
@@ -147,16 +168,16 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         ldapIoSession.write(resultResponse);
     }
 
-// -------------------------- INNER CLASSES --------------------------
+    // -------------------------- INNER CLASSES --------------------------
 
     private class KrbLdapAuthServiceHandlerIoSession extends DummySession {
-// ------------------------------ FIELDS ------------------------------
+        // ------------------------------ FIELDS ------------------------------
 
         private SocketAddress remoteAddress;
 
         private KerberosMessage kerberosMessage = null;
 
-// --------------------- GETTER / SETTER METHODS ---------------------
+        // --------------------- GETTER / SETTER METHODS ---------------------
 
         public KerberosMessage getKerberosMessage() {
             return kerberosMessage;
@@ -175,10 +196,10 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
             this.remoteAddress = remoteAddress;
         }
 
-// ------------------------ INTERFACE METHODS ------------------------
+        // ------------------------ INTERFACE METHODS ------------------------
 
 
-// --------------------- Interface IoSession ---------------------
+        // --------------------- Interface IoSession ---------------------
 
         @Override
         public WriteFuture write(Object message) {
