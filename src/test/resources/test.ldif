@@ -35,5 +35,5 @@ objectclass: krb5Principal
 objectclass: krb5KDCEntry
 uid: alice
 userPassword: password
-krb5PrincipalName: alice@AMARCZUK
+krb5PrincipalName: alice@EXAMPLE.COM
 krb5KeyVersionNumber: 0
