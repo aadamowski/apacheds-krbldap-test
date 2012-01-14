@@ -1,6 +1,7 @@
 package pl.org.olo.krbldap.apacheds.test;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -67,14 +68,20 @@ import pl.org.olo.krbldap.apacheds.handlers.extended.KrbLdapAuthServiceHandler;
                 @SaslMechanism(name = SupportedSaslMechanisms.NTLM, implClass = NtlmMechanismHandler.class),
                 @SaslMechanism(name = SupportedSaslMechanisms.GSS_SPNEGO, implClass = NtlmMechanismHandler.class)})
 @CreateKdcServer(
-        transports = {@CreateTransport(protocol = "UDP", port = 6088), @CreateTransport(protocol = "TCP", port = 6088)})
+        transports = {@CreateTransport(protocol = "UDP", port = 8800), @CreateTransport(protocol = "TCP", port = 8800)})
 @ApplyLdifFiles("test.ldif")
 public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
     /**
      * Pathname of the client test shell script
      */
-    private static final String CLIENT_TEST_SCRIPT =
+    private static final String CLIENT_TEST_SCRIPT_KRBLDAP =
             "/var/soft/PAM/krb5-github/src/pam_krb5/tests/run-tests-krbldap-direct.sh";
+
+    /**
+     * Pathname of the client test shell script
+     */
+    private static final String CLIENT_TEST_SCRIPT_KRB5 =
+            "/var/soft/PAM/krb5-github/src/pam_krb5/tests/run-tests-krb5-direct.sh";
     /**
      * KRB5 conf file location relative to classpath
      */
@@ -90,15 +97,27 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
 
     }
 
+    @Test
+    public void testShouldPerformSuccessfulKrb5Authentication() throws Exception {
+        final String clientTestScript = CLIENT_TEST_SCRIPT_KRB5;
+        runTestScript(clientTestScript);
+
+    }
 
     @Test
-    public void testShouldPerformSuccessfulAuthentication() throws Exception {
+    public void testShouldPerformSuccessfulKrbLdapAuthentication() throws Exception {
         registerKrbLdapExtendedRequest();
         configureKrbLdapAuthServiceHandler();
 
 
         // The server has been set up. Run the integration test client shell script:
-        final Process process = Runtime.getRuntime().exec(CLIENT_TEST_SCRIPT);
+        final String clientTestScript = CLIENT_TEST_SCRIPT_KRBLDAP;
+        runTestScript(clientTestScript);
+
+    }
+
+    private void runTestScript(String clientTestScript) throws IOException, InterruptedException {
+        final Process process = Runtime.getRuntime().exec(clientTestScript);
         final InputStream errorStream = process.getErrorStream();
         final InputStream inputStream = process.getInputStream();
         final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -114,7 +133,6 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
             }
             Thread.sleep(50);
         }
-
         /*
         final int retValue = process.waitFor();
         System.out.println("Return code: [" + retValue + "]");
