@@ -27,6 +27,7 @@ import org.apache.directory.server.ldap.handlers.bind.digestMD5.DigestMd5Mechani
 import org.apache.directory.server.ldap.handlers.bind.gssapi.GssapiMechanismHandler;
 import org.apache.directory.server.ldap.handlers.bind.ntlm.NtlmMechanismHandler;
 import org.apache.directory.server.ldap.handlers.bind.plain.PlainMechanismHandler;
+import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
 import org.apache.directory.shared.ldap.codec.api.LdapApiService;
 import org.apache.directory.shared.ldap.codec.api.LdapApiServiceFactory;
 import org.apache.directory.shared.ldap.model.constants.SupportedSaslMechanisms;
@@ -163,6 +164,9 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         final KrbLdapAuthServiceHandler krbLdapAuthServiceHandler = (KrbLdapAuthServiceHandler) tmp;
         final KdcServer kdcServer = getKdcServer();
         System.out.println("kdcServer: " + kdcServer);
+        kdcServer.setEncryptionTypes(
+                new EncryptionType[]{EncryptionType.AES256_CTS_HMAC_SHA1_96, EncryptionType.AES128_CTS_HMAC_SHA1_96,
+                        EncryptionType.DES3_CBC_SHA1_KD});
         PrincipalStore principalStore =
                 new DirectoryPrincipalStore(kdcServer.getDirectoryService(), new Dn(kdcServer.getSearchBaseDn()));
         final KerberosProtocolHandler kerberosProtocolHandler = new KerberosProtocolHandler(kdcServer, principalStore);
