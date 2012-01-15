@@ -35,6 +35,7 @@ import org.apache.directory.shared.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.shared.ldap.model.message.ExtendedRequest;
 import org.apache.directory.shared.ldap.model.message.ExtendedResponse;
 import org.apache.directory.shared.ldap.model.name.Dn;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapRequest;
@@ -88,6 +89,12 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
      */
     private static final String KRB5_CONF_RESOURCE_LOCATION = "krb5.conf";
 
+    @Before
+    public void initialize() throws LdapInvalidDnException {
+        registerKrbLdapExtendedRequest();
+        configureKrbLdapAuthServiceHandler();
+    }
+
     /**
      * Creates a new instance of SaslGssapiBindTest and sets JAAS system properties.
      */
@@ -107,14 +114,8 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
 
     @Test
     public void testShouldPerformSuccessfulKrbLdapAuthentication() throws Exception {
-        registerKrbLdapExtendedRequest();
-        configureKrbLdapAuthServiceHandler();
-
-
-        // The server has been set up. Run the integration test client shell script:
         final String clientTestScript = CLIENT_TEST_SCRIPT_KRBLDAP;
         runTestScript(clientTestScript);
-
     }
 
     private void runTestScript(String clientTestScript) throws IOException, InterruptedException {
@@ -125,6 +126,7 @@ public class KrbLdapIntegrationTest extends AbstractLdapTestUnit {
         final BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream));
         System.out.println(
                 "Testing started. Check your system's syslog (facility AUTH) for any messages from the PAM module.");
+        System.out.println("Test script: " + clientTestScript);
         while (true) {
             while (reader.ready()) {
                 System.out.println(reader.readLine());
