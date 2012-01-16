@@ -31,8 +31,11 @@ import org.apache.directory.server.ldap.ExtendedOperationHandler;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.LdapSession;
 import org.apache.directory.shared.kerberos.components.PaData;
+import org.apache.directory.shared.kerberos.exceptions.ErrorType;
+import org.apache.directory.shared.kerberos.exceptions.KerberosException;
 import org.apache.directory.shared.kerberos.messages.AsReq;
 import org.apache.directory.shared.kerberos.messages.KerberosMessage;
+import org.apache.directory.shared.kerberos.messages.KrbError;
 import org.apache.directory.shared.ldap.model.exception.LdapProtocolErrorException;
 import org.apache.directory.shared.ldap.model.message.LdapResult;
 import org.apache.directory.shared.ldap.model.message.ResultCodeEnum;
@@ -127,8 +130,9 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
                 LOG.debug("  PaData value: " + paData.getPaDataValue());
                 if (paData.getPaDataType().getValue() == 0) {
                     LOG.warn("    Zero-type PaData found: " + paData);
-                    //                    LOG.warn("    removing.");
-                    //                    iterator.remove();
+                    // Workaround for http://mailman.mit.edu/pipermail/krbdev/2012-January/010640.html :
+                    LOG.warn("    removing.");
+                    iterator.remove();
                 }
             }
         }
@@ -138,7 +142,7 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         final IoSession ldapIoSession = session.getIoSession();
         final KrbLdapAuthServiceHandlerIoSession handlerSession = new KrbLdapAuthServiceHandlerIoSession();
         handlerSession.setRemoteAddress(ldapIoSession.getRemoteAddress());
-        final KerberosMessage kerberosReply;
+        KerberosMessage kerberosReply = null;
         kerberosProtocolHandler.messageReceived(handlerSession, kerberosMessage);
         kerberosReply = handlerSession.getKerberosMessage();
         if (kerberosReply == null) {
@@ -155,7 +159,6 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         }
 
         resultResponse.setKerberosReply(kerberosReply);
-
         final LdapResult ldapResult = resultResponse.getLdapResult();
 
         if (ldapResult == null) {
@@ -164,8 +167,16 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
             throw new LdapProtocolErrorException(message);
         }
 
-        ldapResult.setResultCode(ResultCodeEnum.SUCCESS);
+        if (resultResponse.getKerberosReply() instanceof KrbError) {
+            final ResultCodeEnum resultCode = ResultCodeEnum.PROTOCOL_ERROR;
+            LOG.warn("Kerberos reply is a KrbError, setting LDAP result code: " + resultCode);
+            ldapResult.setResultCode(resultCode);
+        } else {
+            ldapResult.setResultCode(ResultCodeEnum.SUCCESS);
+        }
+        LOG.debug("Setting Kerberos Reply: " + resultResponse.getKerberosReply());
         ldapIoSession.write(resultResponse);
+        LOG.debug("Wrote to Ldap IO Session the following response: " + resultResponse.toString());
     }
 
     // -------------------------- INNER CLASSES --------------------------
@@ -204,6 +215,7 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
         @Override
         public WriteFuture write(Object message) {
             final DefaultWriteFuture writeFuture;
+            LOG.debug("message received in session: " + message);
             if (message instanceof KerberosMessage) {
                 writeFuture = (DefaultWriteFuture) DefaultWriteFuture.newWrittenFuture(this);
                 writeFuture.setValue(message);
@@ -216,6 +228,7 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
                 LOG.error(krbException.getMessage(), krbException);
                 writeFuture = (DefaultWriteFuture) DefaultWriteFuture.newNotWrittenFuture(this, krbException);
             }
+            LOG.debug("Kerberos message stored in session: " + getKerberosMessage());
 
             return writeFuture;
         }
