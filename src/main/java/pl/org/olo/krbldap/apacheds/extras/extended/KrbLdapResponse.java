@@ -12,7 +12,7 @@ import org.apache.directory.shared.ldap.model.message.ExtendedResponse;
 public interface KrbLdapResponse extends ExtendedResponse {
     public static final String EXTENSION_OID = "1.3.6.1.4.1.38261.1.1";
 
-    KerberosMessage getKerberosReply();
+    public KerberosMessage getKerberosReply();
 
-    void setKerberosReply(KerberosMessage kerberosReply);
+    public void setKerberosReply(KerberosMessage kerberosReply);
 }

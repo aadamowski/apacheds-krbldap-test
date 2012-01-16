@@ -14,13 +14,12 @@ import pl.org.olo.krbldap.apacheds.extras.extended.KrbLdapResponse;
  */
 public class KrbLdapRequestDecorator extends ExtendedRequestDecorator<KrbLdapRequest, KrbLdapResponse>
         implements KrbLdapRequest {
-// ------------------------------ FIELDS ------------------------------
+    // ------------------------------ FIELDS ------------------------------
 
     private static final Logger LOG = LoggerFactory.getLogger(KrbLdapRequestDecorator.class);
 
-    private KerberosMessage kerberosMessage;
 
-// --------------------------- CONSTRUCTORS ---------------------------
+    // --------------------------- CONSTRUCTORS ---------------------------
 
     /**
      * Makes a ExtendedRequest a MessageDecorator.
@@ -31,17 +30,17 @@ public class KrbLdapRequestDecorator extends ExtendedRequestDecorator<KrbLdapReq
         super(codec, decoratedMessage);
     }
 
-// --------------------- GETTER / SETTER METHODS ---------------------
+    // --------------------- GETTER / SETTER METHODS ---------------------
 
     public KerberosMessage getKerberosMessage() {
-        return kerberosMessage;
+        return getDecorated().getKerberosMessage();
     }
 
     public void setKerberosMessage(KerberosMessage kerberosMessage) {
-        this.kerberosMessage = kerberosMessage;
+        getDecorated().setKerberosMessage(kerberosMessage);
     }
 
-// -------------------------- OTHER METHODS --------------------------
+    // -------------------------- OTHER METHODS --------------------------
 
     @Override
     public void setRequestValue(byte[] requestValue) {
