@@ -46,19 +46,22 @@ public class KrbLdapResponseDecorator extends ExtendedResponseDecorator<KrbLdapR
 
     @Override
     public byte[] getResponseValue() {
-        if (getKerberosReply() == null) {
+        final KerberosMessage kerberosReply = getKerberosReply();
+        if (kerberosReply == null) {
             LOG.warn("Response value requested while no Kerberos reply has been set. Returning null.");
             return null;
         }
-        final ByteBuffer buffer = ByteBuffer.allocate(getKerberosReply().getExpectedLength() + BUFFER_CAPACITY_MARGIN);
+        final int kerberosReplyLength = kerberosReply.computeLength();
+        LOG.debug("Length of Kerberos reply: {}", kerberosReplyLength);
+        final ByteBuffer buffer = ByteBuffer.allocate(kerberosReplyLength);// + BUFFER_CAPACITY_MARGIN);
         try {
-            getKerberosReply().computeLength();
-            getKerberosReply().encode(buffer);
+            kerberosReply.encode(buffer);
         } catch (EncoderException e) {
             LOG.error("Returning null instead of encoded KrbLDAP response because of exception [" +
                     e.getClass().getName() + "] when encoding, message: " + e.getMessage());
             return null;
         }
+        LOG.debug("Encoded Kerberos message as extended response value.");
         return buffer.array();
     }
 
