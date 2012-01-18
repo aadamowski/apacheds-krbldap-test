@@ -31,8 +31,6 @@ import org.apache.directory.server.ldap.ExtendedOperationHandler;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.ldap.LdapSession;
 import org.apache.directory.shared.kerberos.components.PaData;
-import org.apache.directory.shared.kerberos.exceptions.ErrorType;
-import org.apache.directory.shared.kerberos.exceptions.KerberosException;
 import org.apache.directory.shared.kerberos.messages.AsReq;
 import org.apache.directory.shared.kerberos.messages.KerberosMessage;
 import org.apache.directory.shared.kerberos.messages.KrbError;
@@ -171,9 +169,11 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
             final ResultCodeEnum resultCode = ResultCodeEnum.PROTOCOL_ERROR;
             LOG.warn("Kerberos reply is a KrbError, setting LDAP result code: " + resultCode);
             ldapResult.setResultCode(resultCode);
+            ldapResult.setDiagnosticMessage(((KrbError) resultResponse.getKerberosReply()).getEText());
         } else {
             ldapResult.setResultCode(ResultCodeEnum.SUCCESS);
         }
+        resultResponse.setMessageId(req.getMessageId());
         LOG.debug("Setting Kerberos Reply: " + resultResponse.getKerberosReply());
         ldapIoSession.write(resultResponse);
         LOG.debug("Wrote to Ldap IO Session the following response: " + resultResponse.toString());
