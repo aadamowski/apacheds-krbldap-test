@@ -116,7 +116,7 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
             LOG.debug("ldapServer available: " + this.ldapServer);
         }
         // Clean up zero-type padata entries from the list.
-        // TODO: investigate where do zero-type padata entries come from.
+        // TODO: to be removed once Apache DS correctly handles unknown pre-authentication types.
         if (kerberosMessage instanceof AsReq) {
             LOG.debug("PaData list contents:");
             final List<PaData> paDataList = ((AsReq) kerberosMessage).getPaData();
@@ -133,7 +133,7 @@ public class KrbLdapAuthServiceHandler implements ExtendedOperationHandler<KrbLd
                 }
             }
         }
-        /** TODO: perform message processing similar in behaviour to
+        /** perform message processing similar in behaviour to
          * {@link org.apache.directory.server.kerberos.protocol.KerberosProtocolHandler#messageReceived}
          */
         final IoSession ldapIoSession = session.getIoSession();
