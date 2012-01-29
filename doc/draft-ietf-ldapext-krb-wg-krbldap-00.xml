@@ -3,6 +3,10 @@
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
     <!ENTITY rfc2119 PUBLIC '' 
       'http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml'>
+    <!ENTITY rfc4120 PUBLIC '' 
+      'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4120.xml'>
+    <!ENTITY rfc4511 PUBLIC '' 
+      'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4511.xml'>
 ]>
 
 <rfc category="std" ipr="full3978">
@@ -37,6 +41,32 @@
             described in <xref target="RFC2119"/>.</t>
         </section>
 
+        <section title="Extended operation for transporting Kerberos messages">
+          <t>In <xref target="RFC4511">RFC 4511</xref>, section 4.12, a mechanism for defining extended operations in the LDAP protocol is described. The mechanism is based on pairs of ExtendedRequest - ExtendedResponse message pairs. In KrbLDAP, these extended operation messages are used to transport Kerberos V5 messages.</t>
+          <t>The form of Kerberos messages being transported MUST be identical to the one defined by <xref target="RFC4120">RFC 4120</xref>. The requestName in the LDAP ExtendedRequest message and the responseName in the ExtendedResponse message MUST be set to OID value '1.3.6.1.4.1.38261.1.1'.</t>
+          <t>For the purpose of this document, such requests will be named 'KrbLDAP requests' and responses will be named 'KrbLDAP responses'.</t>
+          <section title="Generation of KrbLDAP requests by the client">
+            <t>When the client wishes to send a KrbLDAP message to server, it constructs a Kerberos V5 PDU using the same rules as described in <xref target="RFC4120">RFC 4120</xref>.</t>
+            <t>It then embeds the resulting encoded Kerberos PDU in a KrbLDAP extended request by placing the unmodified Kerberos V5 PDU in KrbLDAP request's requestValue.</t>
+            <t>This KrbLDAP request is then sent to the LDAP server.</t>
+          </section>
+          <section title="Receipt of KrbLDAP requests by the server">
+            <t>Upon receipt of an KrbLDAP request, if the LDAP server doesn't support the extended operation, its behaviour should be as specified in <xref target="RFC4511">RFC 4511</xref>, section 4.12.</t>
+            <t>Conversely, if LDAP server supports KrbLDAP, it should extract the requestValue from the KrbLDAP request, and treat it as a Kerberos PDU, passing it over to its integrated Kerberos Key Distribution Center (KDC).</t>
+          </section>
+          <section title="Generation of KrbLDAP responses by the server">
+            <t>After the KDC generates the Kerberos V5 reply, the encoded PDU of that reply should be placed by the LDAP server in the ExtendedResponse's responseValue and sent back to the client.</t>
+            <t>The result code of the LDAP ExtendedResponse MUST be success, if no LDAP-level errors have occured; that is, even if the KDC's reply is a Kerberos error, it should be only presented as a KRB_ERROR in the Kerberos PDU, while the LDAP Extended Response should specify a "success" resultCode. Non success LDAP result codes may only be set in case of problems originating at LDAP layer's level.</t>
+          </section>
+          <section title="Receipt of KrbLDAP responses by the client">
+            <t>Upon receiving a KrbLDAP reply, the client extracts the Kerberos V5 PDU from ExtendedResponse's requestValue and processes it in the same way as described in <xref target="RFC4120">RFC 4120</xref>.</t>
+          </section>
+        </section>
+
+        <section title="Interoperability Considerations">
+          <t>Currently there are several LDAP and Kerberos client and server implementation available on the market. It is common for those clients and servers to exhibit interoperability problems stemming from a lack of features, misconfiguration or implementation errors. When diagnosing interoperability problems between KrbLDAP clients and servers, the recommended course of action is to start with testing Kerberos interoperability first, by falling back to plain TCP-based Kerberos V5 (if possible with the given chois of KrbLDAP client and server). This may expose an incompatibility on Kerberos level, which is the most probable cause for interoperability problems.</t>
+        </section>
+
         <section title="Security Considerations">
         <t>None. Security of Kerberos messages exchange isn't based on assumptions about the underlying transport protocol. Currently, UDP and TCP are possible as transport protocols for Kerberos. Because the LDAP protocol is itself transported over TCP, embedding Kerberos messages inside it doesn't remove any guarantees that the TCP protocol provides to plain Kerberos (e.g. ordering of packets).</t>
         </section>
@@ -44,6 +74,8 @@
 
     <back>
         <references title='Normative References'>&rfc2119;</references>
+        <references title='The Kerberos Network Authentication Service (V5)'>&rfc4120;</references>
+        <references title='Lightweight Directory Access Protocol (LDAP): The Protocol'>&rfc4511;</references>
     </back>
 
 </rfc>
