@@ -51,12 +51,12 @@
             <t>This KrbLDAP request is then sent to the LDAP server.</t>
           </section>
           <section title="Receipt of KrbLDAP requests by the server">
-            <t>Upon receipt of an KrbLDAP request, if the LDAP server doesn't support the extended operation, its behaviour should be as specified in <xref target="RFC4511">RFC 4511</xref>, section 4.12.</t>
-            <t>Conversely, if LDAP server supports KrbLDAP, it should extract the requestValue from the KrbLDAP request, and treat it as a Kerberos PDU, passing it over to its integrated Kerberos Key Distribution Center (KDC).</t>
+            <t>Upon receipt of an KrbLDAP request, if the LDAP server doesn't support the extended operation, its behaviour MUST be as specified in <xref target="RFC4511">RFC 4511</xref>, section 4.12.</t>
+            <t>Conversely, if LDAP server supports KrbLDAP, it shall extract the requestValue from the KrbLDAP request, and treat it as a Kerberos PDU, passing it over to its integrated Kerberos Key Distribution Center (KDC).</t>
           </section>
           <section title="Generation of KrbLDAP responses by the server">
-            <t>After the KDC generates the Kerberos V5 reply, the encoded PDU of that reply should be placed by the LDAP server in the ExtendedResponse's responseValue and sent back to the client.</t>
-            <t>The result code of the LDAP ExtendedResponse MUST be success, if no LDAP-level errors have occured; that is, even if the KDC's reply is a Kerberos error, it should be only presented as a KRB_ERROR in the Kerberos PDU, while the LDAP Extended Response should specify a "success" resultCode. Non success LDAP result codes may only be set in case of problems originating at LDAP layer's level.</t>
+            <t>After the KDC generates the Kerberos V5 reply, the encoded PDU of that reply shall be placed by the LDAP server in the ExtendedResponse's responseValue and sent back to the client.</t>
+            <t>The result code of the LDAP ExtendedResponse MUST be success, if no LDAP-level errors have occured; that is, even if the KDC's reply is a Kerberos error, it should be only presented as a KRB_ERROR in the Kerberos PDU, while the LDAP Extended Response shall specify a "success" resultCode. Non success LDAP result codes may only be set in case of problems originating at LDAP layer's level.</t>
           </section>
           <section title="Receipt of KrbLDAP responses by the client">
             <t>Upon receiving a KrbLDAP reply, the client extracts the Kerberos V5 PDU from ExtendedResponse's requestValue and processes it in the same way as described in <xref target="RFC4120">RFC 4120</xref>.</t>
@@ -64,7 +64,7 @@
         </section>
 
         <section title="Interoperability Considerations">
-          <t>Currently there are several LDAP and Kerberos client and server implementation available on the market. It is common for those clients and servers to exhibit interoperability problems stemming from a lack of features, misconfiguration or implementation errors. When diagnosing interoperability problems between KrbLDAP clients and servers, the recommended course of action is to start with testing Kerberos interoperability first, by falling back to plain TCP-based Kerberos V5 (if possible with the given chois of KrbLDAP client and server). This may expose an incompatibility on Kerberos level, which is the most probable cause for interoperability problems.</t>
+          <t>Currently there are several LDAP and Kerberos client and server implementation available on the market. It is common for those clients and servers to exhibit interoperability problems stemming from a lack of features, misconfiguration or implementation errors. When diagnosing interoperability problems between KrbLDAP clients and servers, the RECOMMENDED course of action is to start with testing Kerberos interoperability first, by falling back to plain TCP-based Kerberos V5 (if possible with the given chois of KrbLDAP client and server). This may expose an incompatibility on Kerberos level, which is the most probable cause for interoperability problems.</t>
         </section>
 
         <section title="Security Considerations">
